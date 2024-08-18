@@ -13,8 +13,8 @@ process.chdir(DEPS);
 const PLATFORM = os.platform();
 const ARCH = os.arch();
 console.log(`Current platform: ${PLATFORM}, current architecture: ${ARCH}`);
-const SUPPORTED_PLATFORMS = ["linux", "darwin"]; // Unsaported platforms: 'win32', 'aix', 'freebsd', 'openbsd', 'sunos', 'android'
-const SUPPORTED_ARCH = ["x64", "arm64"]; // Unsaported arch: 'arm', 'ia32', 'mips','mipsel', 'ppc', 'ppc64', 's390', 's390x', 'x32'
+const SUPPORTED_PLATFORMS = ["linux", "darwin"]; // Unsupported platforms: 'win32', 'aix', 'freebsd', 'openbsd', 'sunos', 'android'
+const SUPPORTED_ARCH = ["x64", "arm64"]; // Unsupported arch: 'arm', 'ia32', 'mips','mipsel', 'ppc', 'ppc64', 's390', 's390x', 'x32'
 if (!SUPPORTED_PLATFORMS.includes(PLATFORM)) {
     console.error(`Platform ${PLATFORM} is not supported at the moment`);
     process.exit(1);
@@ -39,6 +39,21 @@ await download(`https://github.com/ailisp/binaryen/releases/download/${BINARYEN_
 fs.mkdirSync("binaryen");
 await executeCommand(`tar xvf ${BINARYEN_TAR_NAME} --directory binaryen`);
 fs.rmSync(BINARYEN_TAR_NAME);
+signale.await("Installing WebAssembly Binaryen...");
+const WEB_ASSEMBLY_BINARYEN_VERSION = `version_118`;
+const WEB_ASSEMBLY_BINARYEN_VERSION_TAG = WEB_ASSEMBLY_BINARYEN_VERSION;
+const WEB_ASSEMBLY_BINARYEN_SYSTEM_NAME = PLATFORM === "linux"
+    ? "Linux"
+    : PLATFORM === "darwin"
+        ? "macOS"
+        : PLATFORM === "win32"
+            ? "windows"
+            : "other";
+const WEB_ASSEMBLY_BINARYEN_TAR_NAME = `binaryen-${WEB_ASSEMBLY_BINARYEN_VERSION_TAG}-${ARCH}-${WEB_ASSEMBLY_BINARYEN_SYSTEM_NAME}.tar.gz`;
+await download(`https://github.com/WebAssembly/binaryen/releases/download/${WEB_ASSEMBLY_BINARYEN_VERSION_TAG}/${WEB_ASSEMBLY_BINARYEN_TAR_NAME}`);
+fs.mkdirSync("webassembly");
+await executeCommand(`tar --strip-components=1 -xvf ${WEB_ASSEMBLY_BINARYEN_TAR_NAME} --directory webassembly`);
+fs.rmSync(WEB_ASSEMBLY_BINARYEN_TAR_NAME);
 signale.await("Installing QuickJS...");
 const QUICK_JS_VERSION = `0.1.3`;
 const QUICK_JS_VERSION_TAG = `v${QUICK_JS_VERSION}`;
