@@ -4,7 +4,7 @@ import test from "ava";
 const DEPOSIT = 1_000_000_000;
 
 test.beforeEach(async (t) => {
-  const worker = await Worker.init();
+  const worker = await Worker.init({ rpcAddr: "http://127.0.0.1:3001" });
   const root = worker.rootAccount;
 
   const payableContract = await root.devDeploy("build/payable.wasm");

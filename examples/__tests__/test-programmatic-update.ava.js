@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 test.beforeEach(async (t) => {
-  const worker = await Worker.init();
+  const worker = await Worker.init({ rpcAddr: "http://127.0.0.1:3001" });
   const root = worker.rootAccount;
 
   const ali = await root.createSubAccount("ali");

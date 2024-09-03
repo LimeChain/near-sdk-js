@@ -2,7 +2,7 @@ import { Worker } from "near-workspaces";
 import test from "ava";
 
 test.beforeEach(async (t) => {
-  const worker = await Worker.init();
+  const worker = await Worker.init({ rpcAddr: "http://127.0.0.1:3001" });
   const root = worker.rootAccount;
 
   const reqireInitFalse = await root.devDeploy("build/require_init_false.wasm");

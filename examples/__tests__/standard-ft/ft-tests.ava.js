@@ -7,7 +7,7 @@ const STOARAGE_BYTE_COST = 10_000_000_000_000_000_000n;
 const ACCOUNT_STORAGE_BALANCE = String(STOARAGE_BYTE_COST * 138n);
 
 test.beforeEach(async (t) => {
-    const worker = await Worker.init();
+    const worker = await Worker.init({ rpcAddr: "http://127.0.0.1:3001" });
     const root = worker.rootAccount;
 
     const ftContract = await root.devDeploy("./build/my-ft.wasm");

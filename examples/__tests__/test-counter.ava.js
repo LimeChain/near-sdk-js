@@ -3,7 +3,7 @@ import test from "ava";
 
 test.beforeEach(async (t) => {
   // Init the worker and start a Sandbox server
-  const worker = await Worker.init();
+  const worker = await Worker.init({ rpcAddr: "http://127.0.0.1:3001" });
 
   // Prepare sandbox for tests, create accounts, deploy contracts, etc.
   const root = worker.rootAccount;
