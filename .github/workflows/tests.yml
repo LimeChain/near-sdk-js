@@ -13,15 +13,15 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v3
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
           cache: pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Install dependencies
         run: pnpm install
       - name: Lint code
@@ -30,11 +30,13 @@ jobs:
         run: pnpm format
       - name: Run git status
         run: git status
-      - name: Check that lints where commited
+      - name: Check that lints were committed
         run: test -z "$(git status --porcelain)"
       - name: Build
         run: pnpm build
-      - name: Check that all build artifacts where commited
+      - name: Check that all build artifacts were committed
         run: test -z "$(git status --porcelain)"
       - name: Run tests
-        run: export NEAR_WORKSPACES_DEBUG=true && pnpm test
+        run: |
+          export NEAR_WORKSPACES_DEBUG=true
+          pnpm test
