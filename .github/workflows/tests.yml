@@ -32,6 +32,8 @@ jobs:
         run: git status
       # - name: Check that lints where commited
       #   run: test -z "$(git status --porcelain)"
+      - name: Prefer IPv4
+        run: cat "precedence ::ffff:0:0/96 100" >> /etc/gai.conf
       - name: dns.lookup
         run: node -e 'dns.lookup("localhost", console.log)'
       - name: Build
