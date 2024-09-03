@@ -32,6 +32,8 @@ jobs:
         run: git status
       - name: Check that lints where commited
         run: test -z "$(git status --porcelain)"
+      - name: Check host alias
+        run: cat /etc/hosts
       - name: Build
         run: pnpm build
       - name: Check that all build artifacts where commited
