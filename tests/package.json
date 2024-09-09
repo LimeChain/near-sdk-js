@@ -56,7 +56,8 @@
     "test:migrate": "ava __tests__/decorators/migrate.ava.js",
     "test:middlewares": "ava __tests__/test-middlewares.ava.js",
     "test:abi": "ava __tests__/abi/abi.ava.js",
-    "test:alt-bn128-api": "ava __tests__/test_alt_bn128_api.ava.js"
+    "test:alt-bn128-api": "ava __tests__/test_alt_bn128_api.ava.js",
+    "calculate-file-sizes": "WORKING_DIR=$(pwd) pnpm --filter shared-scripts run calculate-file-sizes"
   },
   "author": "Near Inc <hello@nearprotocol.com>",
   "license": "Apache-2.0",
@@ -67,6 +68,7 @@
   },
   "dependencies": {
     "typescript": "4.7.4",
-    "near-sdk-js": "workspace:*"
+    "near-sdk-js": "workspace:*",
+    "shared-scripts": "workspace:*"
   }
 }

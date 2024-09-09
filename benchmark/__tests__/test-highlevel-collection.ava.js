@@ -1,6 +1,7 @@
 import { Worker } from "near-workspaces";
 import test from "ava";
-import { logGasDetail } from "./util.js";
+import { generateMinimalGasObject, logTestResults } from "./util.js";
+import { addTestResults } from "./results-store.js";
 
 test.before(async (t) => {
   // Init the worker and start a Sandbox server
@@ -50,7 +51,11 @@ test("JS highlevel collection contract", async (t) => {
   });
 
   t.is(r.result.status.SuccessValue, "");
-  logGasDetail(r, t);
+  logTestResults(r);
+
+  const gasObject = generateMinimalGasObject(r);
+
+  addTestResults("JS_highlevel_collection_contract", gasObject);
 });
 
 test("RS highlevel collection contract", async (t) => {
@@ -68,5 +73,9 @@ test("RS highlevel collection contract", async (t) => {
     value: "d".repeat(100),
   });
   t.is(r.result.status.SuccessValue, "");
-  logGasDetail(r, t);
+  logTestResults(r);
+
+  const gasObject = generateMinimalGasObject(r);
+
+  addTestResults("RS_highlevel_collection_contract", gasObject);
 });

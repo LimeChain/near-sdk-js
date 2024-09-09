@@ -60,16 +60,18 @@
     "test:status-message-serialize-err": "ava __tests__/test-status-message-serialize-err.ava.js",
     "test:status-message-deserialize-err": "ava __tests__/test-status-message-deserialize-err.ava.js",
     "test:status-deserialize-class": "ava __tests__/test-status-deserialize-class.ava.js",
-    "test:basic-updates": "ava __tests__/test-basic-updates.ava.js"
+    "test:basic-updates": "ava __tests__/test-basic-updates.ava.js",
+    "calculate-file-sizes": "WORKING_DIR=$(pwd) pnpm --filter shared-scripts run calculate-file-sizes"
   },
   "author": "Near Inc <hello@nearprotocol.com>",
   "license": "Apache-2.0",
   "dependencies": {
+    "borsh": "^v1.0.0",
     "lodash-es": "^4.17.21",
     "near-contract-standards": "workspace:*",
     "near-sdk-js": "workspace:*",
-    "typescript": "4.7.4",
-    "borsh": "^v1.0.0"
+    "shared-scripts": "workspace:*",
+    "typescript": "4.7.4"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.6",

@@ -1,6 +1,7 @@
 import { Worker } from "near-workspaces";
 import test from "ava";
-import { logGasDetail } from "./util.js";
+import { generateMinimalGasObject, logTestResults } from "./util.js";
+import { addTestResults } from "./results-store.js";
 
 test.before(async (t) => {
   // Init the worker and start a Sandbox server
@@ -35,7 +36,11 @@ test("JS lowlevel minimal contract", async (t) => {
   let r = await bob.callRaw(lowlevelContract, "empty", "");
 
   t.is(r.result.status.SuccessValue, "");
-  logGasDetail(r, t);
+  logTestResults(r);
+
+  const gasObject = generateMinimalGasObject(r);
+
+  addTestResults("JS_lowlevel_minimal_contract", gasObject);
 });
 
 test("RS lowlevel minimal contract", async (t) => {
@@ -43,5 +48,9 @@ test("RS lowlevel minimal contract", async (t) => {
   let r = await bob.callRaw(lowlevelContractRs, "empty", "");
 
   t.is(r.result.status.SuccessValue, "");
-  logGasDetail(r, t);
+  logTestResults(r);
+
+  const gasObject = generateMinimalGasObject(r);
+
+  addTestResults("RS_lowlevel_minimal_contract", gasObject);
 });

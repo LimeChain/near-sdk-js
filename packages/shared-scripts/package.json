@@ -1,0 +1,12 @@
+{
+  "name": "shared-scripts",
+  "version": "1.0.0",
+  "description": "Package for shared scripts between the repos",
+  "type": "module",
+  "scripts": {
+    "calculate-file-sizes": "node src/calculate-file-sizes.js"
+  },
+  "devDependencies": {
+    "json2md": "2.0.1"
+  }
+}

@@ -23,6 +23,9 @@ importers:
       near-sdk-js:
         specifier: workspace:*
         version: link:../packages/near-sdk-js
+      shared-scripts:
+        specifier: workspace:*
+        version: link:../packages/shared-scripts
       typescript:
         specifier: 4.7.4
         version: 4.7.4
@@ -30,6 +33,9 @@ importers:
       ava:
         specifier: ^4.2.0
         version: 4.3.3
+      json2md:
+        specifier: 2.0.1
+        version: 2.0.1
       near-workspaces:
         specifier: 3.5.0
         version: 3.5.0
@@ -51,6 +57,9 @@ importers:
       near-sdk-js:
         specifier: workspace:*
         version: link:../packages/near-sdk-js
+      shared-scripts:
+        specifier: workspace:*
+        version: link:../packages/shared-scripts
       typescript:
         specifier: 4.7.4
         version: 4.7.4
@@ -184,11 +193,20 @@ importers:
         specifier: ^2.7.1
         version: 2.8.8
 
+  packages/shared-scripts:
+    devDependencies:
+      json2md:
+        specifier: 2.0.1
+        version: 2.0.1
+
   tests:
     dependencies:
       near-sdk-js:
         specifier: workspace:*
         version: link:../packages/near-sdk-js
+      shared-scripts:
+        specifier: workspace:*
+        version: link:../packages/shared-scripts
       typescript:
         specifier: 4.7.4
         version: 4.7.4
@@ -1382,6 +1400,9 @@ packages:
     resolution: {integrity: sha512-m6FAo/spmsW2Ab2fU35JTYwtOKa2yAwXSwgjSv1TJzh4Mh7mC3lzAOVLBprb72XsTrgkEIsl7YrFNAiDiRhIGg==}
     engines: {node: '>=12'}
 
+  indento@1.1.13:
+    resolution: {integrity: sha512-YZWk3mreBEM7sBPddsiQnW9Z8SGg/gNpFfscJq00HCDS7pxcQWWWMSVKJU7YkTRyDu1Zv2s8zaK8gQWKmCXHlg==}
+
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
     deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
@@ -1564,6 +1585,9 @@ packages:
 
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
+
+  json2md@2.0.1:
+    resolution: {integrity: sha512-VbwmZ83qmUfKBS2pUOHlzNKEZFPBeJSbzEok3trMYyboZUgdHNn1XZfc1uT8UZs1GHCrmRUBXCfqw4YmmQuOhw==}
 
   json5@2.2.3:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
@@ -3960,6 +3984,8 @@ snapshots:
 
   indent-string@5.0.0: {}
 
+  indento@1.1.13: {}
+
   inflight@1.0.6:
     dependencies:
       once: 1.4.0
@@ -4112,6 +4138,10 @@ snapshots:
   json-schema@0.4.0: {}
 
   json-stable-stringify-without-jsonify@1.0.1: {}
+
+  json2md@2.0.1:
+    dependencies:
+      indento: 1.1.13
 
   json5@2.2.3: {}
 
