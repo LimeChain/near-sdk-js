@@ -96,6 +96,20 @@ export function logTestResults(testResults) {
   console.log(separator);
 }
 
+/**
+ * Generates a gas usage breakdown object from a test result.
+ *
+ * @param {Object} testResult - The result of a test execution, which includes transaction and receipt outcomes.
+ * @param {boolean} [isMinimal=false] - If true, includes only minimal gas usage data; otherwise, includes additional cross-contract call and refund data.
+ * @returns {Object} An object containing formatted gas usage values, including:
+ *   - gasUsedToConvertTransactionToReceipt: Gas used to convert the transaction to a receipt.
+ *   - gasUsedToExecuteReceipt: Gas used to execute the receipt.
+ *   - gasBreakdownForReceipt: Formatted gas breakdown results for the receipt.
+ *   - gasUsedToExecuteCrossContractCall: Gas used to execute any cross-contract calls (if not minimal).
+ *   - gasUsedToRefundUnusedGasForCrossContractCall: Gas used to refund unused gas for cross-contract calls (if not minimal).
+ *   - gasUsedToRefundUnusedGas: Gas used to refund any unused gas (if not minimal).
+ *   - totalGasUsed: Total gas used including all relevant transactions and receipts.
+ */
 export function generateGasObject(testResult, isMinimal = false) {
   // Initialize gas breakdown
   const gasBreakdownForReceipt = gasBreakdown(
@@ -158,11 +172,49 @@ export function generateGasObject(testResult, isMinimal = false) {
   };
 }
 
+/**
+ * Formats the gas breakdown results.
+ *
+ * @param {Map<string, number>} resultsMap - A map where keys represent gas usage categories and values represent the corresponding gas usage.
+ * @returns {Object} An object with formatted gas usage values for each category.
+ */
 function formatGasBreakdownResults(resultsMap) {
   return Array.from(resultsMap).reduce((acc, [key, value]) => {
     acc[key] = formatGas(value);
     return acc;
   }, {});
+}
+
+/**
+ * Retrieves an existing row with the specified description from the rows array,
+ * or initializes a new row if none exists.
+ *
+ * @param {Array<Array<string>>} rows - The array of rows where each row is an array of values.
+ * @param {string} description - The description for the row.
+ * @param {string} defaultValue - The default value to initialize the row with.
+ * @returns {Array<string>} - The row array for the given description.
+ */
+function getOrCreateRow(rows, description, defaultValue) {
+  let row = rows.find((r) => r[0] === description);
+  if (!row) {
+    row = [description, defaultValue, ""];
+    rows.push(row);
+  }
+  return row;
+}
+
+/**
+ * Updates the value at a specific index in a row with the given description.
+ * If the row does not exist, it will be created using getOrCreateRow.
+ *
+ * @param {Array<Array<string>>} rows - The array of rows where each row is an array of values.
+ * @param {string} description - The description for the row to update.
+ * @param {number} valueIndex - The index in the row where the value should be set.
+ * @param {string} value - The value to set in the row.
+ */
+function updateRow(rows, description, valueIndex, value) {
+  const row = getOrCreateRow(rows, description, "");
+  row[valueIndex] = value;
 }
 
 /**
@@ -183,10 +235,9 @@ export async function jsonToMarkdown(title, data, fileName) {
   const markdownSections = Object.entries(sortedJsonData).map(
     ([name, details]) => {
       const headers = ["Metric", "Rust", "JS"];
-
-      const metrics = new Set();
       const rows = [];
 
+      // Gas details for Rust
       const gasDetails = {
         "Convert transaction to receipt":
           details.gasUsedToConvertTransactionToReceipt,
@@ -194,58 +245,47 @@ export async function jsonToMarkdown(title, data, fileName) {
           details.gasUsedToExecuteReceipt,
       };
 
-      Object.keys(gasDetails).forEach((description) => {
-        const value = gasDetails[description];
+      Object.entries(gasDetails).forEach(([description, value]) => {
         if (value) {
-          rows.push([description, value, ""]);
+          updateRow(rows, description, 1, value);
         }
       });
 
+      // Breakdown metrics for Rust
       const breakdown = details.gasBreakdownForReceipt ?? details;
-      Object.keys(breakdown).forEach((metric) => {
-        metrics.add(metric);
-        rows.push([metric, breakdown[metric], ""]);
+      Object.entries(breakdown).forEach(([metric, value]) => {
+        updateRow(rows, metric, 1, value);
       });
 
+      // Find JS entry and update rows with JS values
       const jsEntry = Object.entries(sortedJsonData).find(
-        ([key, _]) => key.startsWith("JS") && key.includes(name.split("_")[1])
+        ([key]) => key.startsWith("JS") && key.includes(name.split("_")[1])
       );
 
       if (jsEntry) {
         const [, jsDetails] = jsEntry;
 
-        if (jsDetails.gasBreakdownForReceipt) {
-          const breakdown = jsDetails.gasBreakdownForReceipt;
-          Object.keys(breakdown).forEach((subMetric) => {
-            const row = rows.find((r) => r[0] === subMetric);
-            if (row) {
-              row[2] = breakdown[subMetric];
-            }
-          });
-        } else {
-          Object.keys(jsDetails).forEach((metric) => {
-            const row = rows.find((r) => r[0] === metric);
-            if (row) {
-              row[2] = jsDetails[metric];
-            }
-          });
-        }
+        const jsBreakdown = jsDetails.gasBreakdownForReceipt ?? jsDetails;
+        Object.entries(jsBreakdown).forEach(([metric, value]) => {
+          updateRow(rows, metric, 2, value);
+        });
 
-        if (jsDetails.gasUsedToConvertTransactionToReceipt) {
-          const row = rows.find(
-            (r) => r[0] === "Convert transaction to receipt"
-          );
-          if (row) row[2] = jsDetails.gasUsedToConvertTransactionToReceipt;
-        }
-
-        if (jsDetails.gasUsedToExecuteReceipt) {
-          const row = rows.find(
-            (r) => r[0] === "Execute the receipt (actual contract call)"
-          );
-          if (row) row[2] = jsDetails.gasUsedToExecuteReceipt;
-        }
+        // Update specific gas used values for JS
+        updateRow(
+          rows,
+          "Convert transaction to receipt",
+          2,
+          jsDetails.gasUsedToConvertTransactionToReceipt
+        );
+        updateRow(
+          rows,
+          "Execute the receipt (actual contract call)",
+          2,
+          jsDetails.gasUsedToExecuteReceipt
+        );
       }
 
+      // Add remaining metrics
       rows.push(
         [
           "Gas used to refund unused gas",
@@ -322,20 +362,14 @@ function sortJsonData(data) {
  * @returns {Array} - The filtered markdown sections data.
  */
 function filterMarkdownSections(sections) {
-  const filteredSections = [];
   const rsBaseNames = new Set();
-
-  sections.forEach((section) => {
-    if (section.h3.startsWith("RS_")) {
-      const baseName = section.h3.replace(/^RS_/, "");
-      rsBaseNames.add(baseName);
-    }
-  });
+  const filteredSections = [];
 
   sections.forEach((section) => {
     const baseName = section.h3.replace(/^RS_/, "").replace(/^JS_/, "");
 
     if (section.h3.startsWith("RS_")) {
+      rsBaseNames.add(baseName);
       filteredSections.push({ ...section, h3: baseName });
     } else if (section.h3.startsWith("JS_") && !rsBaseNames.has(baseName)) {
       filteredSections.push({ ...section, h3: baseName });
