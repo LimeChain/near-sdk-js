@@ -7,6 +7,7 @@ export function formatGas(gas) {
     let roundTGas = Math.round(tGas * 100000) / 100000;
     return roundTGas + "T";
   }
+
   let tGas = gas / 10 ** 12;
   let roundTGas = Math.round(tGas * 100) / 100;
   return roundTGas + "T";
@@ -23,11 +24,9 @@ export function gasBreakdown(outcome) {
 export function logTestResults(testResults) {
   // Determine which function to use based on the structure of the results
   const isMinimal = testResults.result.receipts_outcome.length === 2;
-  const generateGasObjectFn = isMinimal
-    ? generateMinimalGasObject
-    : generateGasObject;
 
-  const gasObject = generateGasObjectFn(testResults);
+  // Generate the gas object with the appropriate flag
+  const gasObject = generateGasObject(testResults, isMinimal);
 
   // Convert the gas object to a table-friendly format
   const breakdownEntries = Object.entries(gasObject.gasBreakdownForReceipt);
@@ -57,6 +56,7 @@ export function logTestResults(testResults) {
   const maxDescriptionLength = Math.max(
     ...data.map((row) => row.Description.length)
   );
+
   const descriptionWidth = maxDescriptionLength + 4;
   const gasWidth = 15; // Increased width for better formatting
 
@@ -86,61 +86,65 @@ export function logTestResults(testResults) {
   console.log(separator);
 }
 
-export function generateMinimalGasObject(testMinimalResult) {
-  const mapResult = gasBreakdown(
-    testMinimalResult.result.receipts_outcome[0].outcome
+export function generateGasObject(testResult, isMinimal = false) {
+  // Initialize gas breakdown
+  const gasBreakdownForReceipt = gasBreakdown(
+    testResult.result.receipts_outcome[0].outcome
   );
 
-  const gasBreakdownResults = formatGasBreakdownResults(mapResult);
+  const formattedGasBreakdown = formatGasBreakdownResults(
+    gasBreakdownForReceipt
+  );
+
+  // Common values
+  const gasUsedToConvertTransactionToReceipt = formatGas(
+    testResult.result.transaction_outcome.outcome.gas_burnt
+  );
+
+  const gasUsedToExecuteReceipt = formatGas(
+    testResult.result.receipts_outcome[0].outcome.gas_burnt
+  );
+
+  // Initialize optional values
+  let gasUsedToExecuteCrossContractCall = undefined;
+  let gasUsedToRefundUnusedGasForCrossContractCall = undefined;
+
+  let gasUsedToRefundUnusedGas = formatGas(
+    testResult.result.receipts_outcome[1]?.outcome.gas_burnt ?? 0
+  );
+
+  // If not minimal, set additional values
+  if (!isMinimal) {
+    gasUsedToExecuteCrossContractCall = formatGas(
+      testResult.result.receipts_outcome[1]?.outcome.gas_burnt ?? 0
+    );
+    gasUsedToRefundUnusedGasForCrossContractCall = formatGas(
+      testResult.result.receipts_outcome[2]?.outcome.gas_burnt ?? 0
+    );
+    gasUsedToRefundUnusedGas = formatGas(
+      testResult.result.receipts_outcome[3]?.outcome.gas_burnt ?? 0
+    );
+  }
+
+  // Calculate total gas used
+  const totalGasUsed = formatGas(
+    testResult.result.transaction_outcome.outcome.gas_burnt +
+      testResult.result.receipts_outcome[0].outcome.gas_burnt +
+      (isMinimal
+        ? testResult.result.receipts_outcome[1]?.outcome.gas_burnt ?? 0
+        : (testResult.result.receipts_outcome[1]?.outcome.gas_burnt ?? 0) +
+          (testResult.result.receipts_outcome[2]?.outcome.gas_burnt ?? 0) +
+          (testResult.result.receipts_outcome[3]?.outcome.gas_burnt ?? 0))
+  );
 
   return {
-    gasUsedToConvertTransactionToReceipt: formatGas(
-      testMinimalResult.result.transaction_outcome.outcome.gas_burnt
-    ),
-    gasUsedToExecuteReceipt: formatGas(
-      testMinimalResult.result.receipts_outcome[0].outcome.gas_burnt
-    ),
-    gasBreakdownForReceipt: gasBreakdownResults,
-    gasUsedToRefundUnusedGas: formatGas(
-      testMinimalResult.result.receipts_outcome[1].outcome.gas_burnt
-    ),
-    totalGasUsed: formatGas(
-      testMinimalResult.result.transaction_outcome.outcome.gas_burnt +
-        testMinimalResult.result.receipts_outcome[0].outcome.gas_burnt +
-        testMinimalResult.result.receipts_outcome[1].outcome.gas_burnt
-    ),
-  };
-}
-
-export function generateGasObject(testResult) {
-  const mapResult = gasBreakdown(testResult.result.receipts_outcome[0].outcome);
-
-  const gasBreakdownResults = formatGasBreakdownResults(mapResult);
-
-  return {
-    gasUsedToConvertTransactionToReceipt: formatGas(
-      testResult.result.transaction_outcome.outcome.gas_burnt
-    ),
-    gasUsedToExecuteReceipt: formatGas(
-      testResult.result.receipts_outcome[0].outcome.gas_burnt
-    ),
-    gasBreakdownForReceipt: gasBreakdownResults,
-    gasUsedToExecuteCrossContractCall: formatGas(
-      testResult.result.receipts_outcome[1].outcome.gas_burnt
-    ),
-    gasUsedToRefundUnusedGasForCrossContractCall: formatGas(
-      testResult.result.receipts_outcome[2].outcome.gas_burnt
-    ),
-    gasUsedToRefundUnusedGas: formatGas(
-      testResult.result.receipts_outcome[3].outcome.gas_burnt
-    ),
-    totalGasUsed: formatGas(
-      testResult.result.transaction_outcome.outcome.gas_burnt +
-        testResult.result.receipts_outcome[0].outcome.gas_burnt +
-        testResult.result.receipts_outcome[1].outcome.gas_burnt +
-        testResult.result.receipts_outcome[2].outcome.gas_burnt +
-        testResult.result.receipts_outcome[3].outcome.gas_burnt
-    ),
+    gasUsedToConvertTransactionToReceipt,
+    gasUsedToExecuteReceipt,
+    gasBreakdownForReceipt: formattedGasBreakdown,
+    gasUsedToExecuteCrossContractCall,
+    gasUsedToRefundUnusedGasForCrossContractCall,
+    gasUsedToRefundUnusedGas,
+    totalGasUsed,
   };
 }
 
@@ -173,37 +177,30 @@ export async function jsonToMarkdown(title, data, fileName) {
       const metrics = new Set();
       const rows = [];
 
-      if (details.gasUsedToConvertTransactionToReceipt) {
-        rows.push([
-          "Convert transaction to receipt",
+      const gasDetails = {
+        "Convert transaction to receipt":
           details.gasUsedToConvertTransactionToReceipt,
-          "",
-        ]);
-      }
-      if (details.gasUsedToExecuteReceipt) {
-        rows.push([
-          "Execute the receipt (actual contract call)",
+        "Execute the receipt (actual contract call)":
           details.gasUsedToExecuteReceipt,
-          "",
-        ]);
-      }
+      };
 
-      if (details.gasBreakdownForReceipt) {
-        const breakdown = details.gasBreakdownForReceipt;
-        Object.keys(breakdown).forEach((subMetric) => {
-          metrics.add(subMetric);
-          rows.push([subMetric, breakdown[subMetric], ""]);
-        });
-      } else {
-        Object.keys(details).forEach((metric) => {
-          metrics.add(metric);
-          rows.push([metric, details[metric], ""]);
-        });
-      }
+      Object.keys(gasDetails).forEach((description) => {
+        const value = gasDetails[description];
+        if (value) {
+          rows.push([description, value, ""]);
+        }
+      });
+
+      const breakdown = details.gasBreakdownForReceipt ?? details;
+      Object.keys(breakdown).forEach((metric) => {
+        metrics.add(metric);
+        rows.push([metric, breakdown[metric], ""]);
+      });
 
       const jsEntry = Object.entries(sortedJsonData).find(
         ([key, _]) => key.startsWith("JS") && key.includes(name.split("_")[1])
       );
+
       if (jsEntry) {
         const [, jsDetails] = jsEntry;
 
@@ -230,6 +227,7 @@ export async function jsonToMarkdown(title, data, fileName) {
           );
           if (row) row[2] = jsDetails.gasUsedToConvertTransactionToReceipt;
         }
+
         if (jsDetails.gasUsedToExecuteReceipt) {
           const row = rows.find(
             (r) => r[0] === "Execute the receipt (actual contract call)"
@@ -238,16 +236,18 @@ export async function jsonToMarkdown(title, data, fileName) {
         }
       }
 
-      rows.push([
-        "Gas used to refund unused gas",
-        details.gasUsedToRefundUnusedGas,
-        jsEntry ? jsEntry[1].gasUsedToRefundUnusedGas : "",
-      ]);
-      rows.push([
-        "Total gas used",
-        details.totalGasUsed,
-        jsEntry ? jsEntry[1].totalGasUsed : "",
-      ]);
+      rows.push(
+        [
+          "Gas used to refund unused gas",
+          details.gasUsedToRefundUnusedGas,
+          jsEntry ? jsEntry[1].gasUsedToRefundUnusedGas : "",
+        ],
+        [
+          "Total gas used",
+          details.totalGasUsed,
+          jsEntry ? jsEntry[1].totalGasUsed : "",
+        ]
+      );
 
       return {
         h3: name,
@@ -295,13 +295,12 @@ function sortJsonData(data) {
     "JS_expensive_contract_20000_times",
   ];
 
-  const sortedData = {};
-
-  order.forEach((key) => {
+  const sortedData = order.reduce((acc, key) => {
     if (data[key]) {
-      sortedData[key] = data[key];
+      acc[key] = data[key];
     }
-  });
+    return acc;
+  }, {});
 
   return sortedData;
 }

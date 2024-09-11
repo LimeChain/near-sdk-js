@@ -1,6 +1,6 @@
 import { Worker } from "near-workspaces";
 import test from "ava";
-import { generateMinimalGasObject, logTestResults } from "./util.js";
+import { generateGasObject, logTestResults } from "./util.js";
 import { addTestResults } from "./results-store.js";
 
 test.before(async (t) => {
@@ -38,7 +38,7 @@ test("JS lowlevel API contract", async (t) => {
   t.is(r.result.status.SuccessValue, "");
   logTestResults(r);
 
-  const gasObject = generateMinimalGasObject(r);
+  const gasObject = generateGasObject(r, true);
 
   addTestResults("JS_lowlevel_API_contract", gasObject);
 });
@@ -50,7 +50,7 @@ test("RS lowlevel API contract", async (t) => {
   t.is(r.result.status.SuccessValue, "");
   logTestResults(r);
 
-  const gasObject = generateMinimalGasObject(r);
+  const gasObject = generateGasObject(r, true);
 
   addTestResults("RS_lowlevel_API_contract", gasObject);
 });

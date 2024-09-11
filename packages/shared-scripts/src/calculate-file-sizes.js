@@ -5,6 +5,7 @@ import json2md from "json2md";
 // Get directory and flags from command line arguments
 const args = process.argv.slice(2);
 const relativeDir = args[0];
+
 const isBefore = args.includes("--before");
 const isAfter = args.includes("--after");
 
@@ -19,7 +20,8 @@ if (!isBefore && !isAfter) {
 }
 
 // Get the working directory from the environment variable
-const scriptDir = process.env.WORKING_DIR || process.cwd();
+const scriptDir = process.env.WORKING_DIR ?? process.cwd();
+
 const dir = path.resolve(scriptDir, relativeDir);
 const jsonFilePath = path.join(scriptDir, "file-sizes.json");
 
@@ -29,17 +31,15 @@ const calculateFileSizes = async () => {
     await fs.access(dir);
 
     const files = await fs.readdir(dir);
+
     let fileSizes = { beforeOptimization: {}, afterOptimization: {} };
 
     // Check if the JSON file already exists and load data
-    if (
-      await fs
-        .stat(jsonFilePath)
-        .then(() => true)
-        .catch(() => false)
-    ) {
+    try {
       const data = await fs.readFile(jsonFilePath, "utf-8");
       fileSizes = JSON.parse(data);
+    } catch {
+      // If file doesn't exist, initialize fileSizes as default
     }
 
     // If the --after flag is used, ensure beforeOptimization data exists
@@ -53,27 +53,30 @@ const calculateFileSizes = async () => {
     // Filter .wasm files and calculate sizes
     const wasmFiles = files.filter((file) => path.extname(file) === ".wasm");
 
-    const fileSizePromises = wasmFiles.map(async (file) => {
-      const filePath = path.join(dir, file);
-      const stats = await fs.stat(filePath);
-      const fileSizeInKB = (stats.size / 1024).toFixed(2);
-
-      // Add file size to the appropriate section
-      if (isBefore) {
-        fileSizes.beforeOptimization[file] = `${fileSizeInKB} KB`;
-      } else if (isAfter) {
-        fileSizes.afterOptimization[file] = `${fileSizeInKB} KB`;
-      }
-    });
-
     // Wait for all file size calculations to complete
-    await Promise.all(fileSizePromises);
+    await Promise.all(
+      wasmFiles.map(async (file) => {
+        const filePath = path.join(dir, file);
+        const stats = await fs.stat(filePath);
+
+        const fileSizeInKB = (stats.size / 1024).toFixed(2);
+
+        // Add file size to the appropriate section
+        if (isBefore) {
+          fileSizes.beforeOptimization[file] = `${fileSizeInKB} KB`;
+        } else if (isAfter) {
+          fileSizes.afterOptimization[file] = `${fileSizeInKB} KB`;
+        }
+      })
+    );
 
     // Write the result to the JSON file
     await fs.writeFile(jsonFilePath, JSON.stringify(fileSizes, null, 2));
+
     console.log(`File sizes saved to ${jsonFilePath}`);
 
     const updatedData = await fs.readFile(jsonFilePath, "utf-8");
+
     const updatedFileSizes = JSON.parse(updatedData);
 
     if (
@@ -98,7 +101,7 @@ const generateMarkdown = async (outputDir, data) => {
     table: {
       headers: ["File Name", "Before Opt (KB)", "After Opt (KB)", "% Diff"],
       rows: Object.keys(data.beforeOptimization).map((file) => {
-        const beforeSize = data.beforeOptimization[file];
+        const beforeSize = data.beforeOptimization[file] || "N/A";
         const afterSize = data.afterOptimization[file] || "N/A";
         return [
           file,
@@ -127,6 +130,7 @@ const generateMarkdown = async (outputDir, data) => {
 const calculatePercentageDifference = (beforeSize, afterSize) => {
   const beforeSizeNum = parseFloat(beforeSize);
   const afterSizeNum = parseFloat(afterSize);
+
   return (
     (((beforeSizeNum - afterSizeNum) / beforeSizeNum) * 100).toFixed(2) + "%"
   );

@@ -1,6 +1,6 @@
 import { Worker } from "near-workspaces";
 import test from "ava";
-import { generateMinimalGasObject, logTestResults } from "./util.js";
+import { generateGasObject, logTestResults } from "./util.js";
 import { addTestResults } from "./results-store.js";
 
 test.before(async (t) => {
@@ -39,7 +39,7 @@ test("JS expensive contract, iterate 100 times", async (t) => {
 
   logTestResults(r);
 
-  const gasObject = generateMinimalGasObject(r);
+  const gasObject = generateGasObject(r, true);
 
   addTestResults("JS_expensive_contract_100_times", gasObject);
 });
@@ -52,7 +52,7 @@ test("RS expensive contract. iterate 100 times", async (t) => {
 
   logTestResults(r);
 
-  const gasObject = generateMinimalGasObject(r);
+  const gasObject = generateGasObject(r, true);
 
   addTestResults("RS_expensive_contract_100_times", gasObject);
 });
@@ -70,7 +70,7 @@ test("JS expensive contract, iterate 10000 times", async (t) => {
 
   logTestResults(r);
 
-  const gasObject = generateMinimalGasObject(r);
+  const gasObject = generateGasObject(r, true);
 
   addTestResults("JS_expensive_contract_10000_times", gasObject);
 });
@@ -83,7 +83,7 @@ test("RS expensive contract. iterate 10000 times", async (t) => {
 
   logTestResults(r);
 
-  const gasObject = generateMinimalGasObject(r);
+  const gasObject = generateGasObject(r, true);
 
   addTestResults("RS_expensive_contract_10000_times", gasObject);
 });
@@ -101,7 +101,7 @@ test("JS expensive contract, iterate 20000 times", async (t) => {
 
   logTestResults(r);
 
-  const gasObject = generateMinimalGasObject(r);
+  const gasObject = generateGasObject(r, true);
 
   addTestResults("JS_expensive_contract_20000_times", gasObject);
 });
@@ -114,7 +114,7 @@ test("RS expensive contract. iterate 20000 times", async (t) => {
 
   logTestResults(r);
 
-  const gasObject = generateMinimalGasObject(r);
+  const gasObject = generateGasObject(r, true);
 
   addTestResults("RS_expensive_contract_20000_times", gasObject);
 });

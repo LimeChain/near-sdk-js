@@ -11,17 +11,13 @@ function readExistingResults() {
   return {};
 }
 
-export function saveResults(newResults) {
-  const existingResults = readExistingResults();
-  const combinedResults = { ...existingResults, ...newResults };
-  fs.writeFileSync(resultsFilePath, JSON.stringify(combinedResults, null, 2));
-}
-
 export function addTestResults(testName, result) {
   if (process.env.GENERATE_REPORT === "true") {
     const tempResults = {};
     tempResults[testName] = result;
 
-    saveResults(tempResults);
+    const existingResults = readExistingResults();
+    const combinedResults = { ...existingResults, ...tempResults };
+    fs.writeFileSync(resultsFilePath, JSON.stringify(combinedResults, null, 2));
   }
 }
