@@ -39,9 +39,6 @@ importers:
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      shared-scripts:
-        specifier: workspace:*
-        version: link:../packages/shared-scripts
 
   examples:
     dependencies:
@@ -73,9 +70,6 @@ importers:
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      shared-scripts:
-        specifier: workspace:*
-        version: link:../packages/shared-scripts
 
   packages/near-contract-standards:
     dependencies:
@@ -217,9 +211,6 @@ importers:
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      shared-scripts:
-        specifier: workspace:*
-        version: link:../packages/shared-scripts
 
 packages:
 

@@ -21,6 +21,16 @@ export function gasBreakdown(outcome) {
   );
 }
 
+/**
+ * Logs the gas usage breakdown from test results in a table format.
+ *
+ * This function determines whether the test results are minimal or full based on
+ * the number of receipts outcomes. It then generates a gas usage object using the
+ * appropriate flag, converts this object into a table-friendly format, and logs
+ * the data in a well-formatted table.
+ *
+ * @param {Object} testResults - The test results object containing gas usage metrics.
+ */
 export function logTestResults(testResults) {
   // Determine which function to use based on the structure of the results
   const isMinimal = testResults.result.receipts_outcome.length === 2;
@@ -63,7 +73,7 @@ export function logTestResults(testResults) {
   // Create header and separator lines
   const header = `| ${"Description".padEnd(
     descriptionWidth
-  )} | ${"GasUsed".padEnd(gasWidth)} |`;
+  )} | ${"Gas Used".padEnd(gasWidth)} |`;
   const separator = `|${"-".repeat(descriptionWidth + 2)}|${"-".repeat(
     gasWidth + 2
   )}|`;
@@ -75,7 +85,7 @@ export function logTestResults(testResults) {
         descriptionWidth
       )} | ${row.GasUsed.padEnd(gasWidth)} |`;
     })
-    .join("\n" + separator + "\n");
+    .join(`\n${separator}\n`);
 
   // Print the results
   console.log("");
