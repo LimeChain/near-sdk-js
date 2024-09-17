@@ -1,12 +1,13 @@
 import { Worker } from "near-workspaces";
 import test from "ava";
-import { logGasDetail } from "./util.js";
+import { generateGasObject, logTestResults } from "./util.js";
+import { addTestResults } from "./results-store.js";
 
 test.before(async (t) => {
   // Init the worker and start a Sandbox server
   const worker = await Worker.init();
 
-  // Prepare sandbox for tests, create accounts, deploy contracts, etx.
+  // Prepare sandbox for tests, create accounts, deploy contracts, etc.
   const root = worker.rootAccount;
 
   // Deploy the test contract.
@@ -35,14 +36,25 @@ test("JS expensive contract, iterate 100 times", async (t) => {
   let r = await bob.callRaw(expensiveContract, "expensive", { n: 100 });
 
   t.is(r.result.status.SuccessValue, "LTUw");
-  logGasDetail(r, t);
+
+  logTestResults(r);
+
+  const gasObject = generateGasObject(r, true);
+
+  addTestResults("JS_expensive_contract_100_times", gasObject);
 });
 
 test("RS expensive contract. iterate 100 times", async (t) => {
   const { bob, expensiveContractRs } = t.context.accounts;
   let r = await bob.callRaw(expensiveContractRs, "expensive", { n: 100 });
+
   t.is(r.result.status.SuccessValue, "LTUw");
-  logGasDetail(r, t);
+
+  logTestResults(r);
+
+  const gasObject = generateGasObject(r, true);
+
+  addTestResults("RS_expensive_contract_100_times", gasObject);
 });
 
 test("JS expensive contract, iterate 10000 times", async (t) => {
@@ -55,14 +67,25 @@ test("JS expensive contract, iterate 10000 times", async (t) => {
   );
 
   t.is(r.result.status.SuccessValue, "LTUwMDA=");
-  logGasDetail(r, t);
+
+  logTestResults(r);
+
+  const gasObject = generateGasObject(r, true);
+
+  addTestResults("JS_expensive_contract_10000_times", gasObject);
 });
 
 test("RS expensive contract. iterate 10000 times", async (t) => {
   const { bob, expensiveContractRs } = t.context.accounts;
   let r = await bob.callRaw(expensiveContractRs, "expensive", { n: 10000 });
+
   t.is(r.result.status.SuccessValue, "LTUwMDA=");
-  logGasDetail(r, t);
+
+  logTestResults(r);
+
+  const gasObject = generateGasObject(r, true);
+
+  addTestResults("RS_expensive_contract_10000_times", gasObject);
 });
 
 test("JS expensive contract, iterate 20000 times", async (t) => {
@@ -75,12 +98,23 @@ test("JS expensive contract, iterate 20000 times", async (t) => {
   );
 
   t.is(r.result.status.SuccessValue, "LTEwMDAw");
-  logGasDetail(r, t);
+
+  logTestResults(r);
+
+  const gasObject = generateGasObject(r, true);
+
+  addTestResults("JS_expensive_contract_20000_times", gasObject);
 });
 
 test("RS expensive contract. iterate 20000 times", async (t) => {
   const { bob, expensiveContractRs } = t.context.accounts;
   let r = await bob.callRaw(expensiveContractRs, "expensive", { n: 20000 });
+
   t.is(r.result.status.SuccessValue, "LTEwMDAw");
-  logGasDetail(r, t);
+
+  logTestResults(r);
+
+  const gasObject = generateGasObject(r, true);
+
+  addTestResults("RS_expensive_contract_20000_times", gasObject);
 });
