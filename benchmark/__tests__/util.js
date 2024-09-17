@@ -2,50 +2,35 @@ import json2md from "json2md";
 import fs from "fs/promises";
 
 export function formatGas(gas) {
-  if (gas < 10 ** 12) {
-    let tGas = gas / 10 ** 12;
-    let roundTGas = Math.round(tGas * 100000) / 100000;
-    return roundTGas + "T";
-  }
-
   let tGas = gas / 10 ** 12;
-  let roundTGas = Math.round(tGas * 100) / 100;
+  let roundTGas =
+    gas < 10 ** 12
+      ? Math.round(tGas * 100000) / 100000
+      : Math.round(tGas * 100) / 100;
   return roundTGas + "T";
 }
 
 export function gasBreakdown(outcome) {
-  return new Map(
-    outcome.metadata.gas_profile.map((g) => {
-      return [g.cost, Number(g.gas_used)];
-    })
-  );
+  return outcome.metadata.gas_profile.reduce((acc, g) => {
+    acc[g.cost] = formatGas(Number(g.gas_used));
+    return acc;
+  }, {});
 }
 
 /**
- * Logs the gas usage breakdown from test results in a table format.
+ * Converts gas breakdown object to table rows.
  *
- * This function determines whether the test results are minimal or full based on
- * the number of receipts outcomes. It then generates a gas usage object using the
- * appropriate flag, converts this object into a table-friendly format, and logs
- * the data in a well-formatted table.
- *
- * @param {Object} testResults - The test results object containing gas usage metrics.
+ * @param {Object} gasObject - The object containing gas breakdown data.
+ * @returns {Array} An array of objects representing table rows.
  */
-export function logTestResults(testResults) {
-  // Determine which function to use based on the structure of the results
-  const isMinimal = testResults.result.receipts_outcome.length === 2;
-
-  // Generate the gas object with the appropriate flag
-  const gasObject = generateGasObject(testResults, isMinimal);
-
-  // Convert the gas object to a table-friendly format
+function convertGasBreakdownToRows(gasObject) {
   const breakdownEntries = Object.entries(gasObject.gasBreakdownForReceipt);
   const breakdownRows = breakdownEntries.map(([key, value]) => ({
     Description: key,
     GasUsed: value,
   }));
 
-  const data = [
+  return [
     {
       Description: "Gas Used to Convert Transaction to Receipt",
       GasUsed: gasObject.gasUsedToConvertTransactionToReceipt,
@@ -61,8 +46,14 @@ export function logTestResults(testResults) {
     },
     { Description: "Total Gas Used", GasUsed: gasObject.totalGasUsed },
   ];
+}
 
-  // Determine column widths
+/**
+ * Formats the data into a Markdown table and logs it.
+ *
+ * @param {Array} data - The data to be formatted into a table.
+ */
+function logMarkdownTable(data) {
   const maxDescriptionLength = Math.max(
     ...data.map((row) => row.Description.length)
   );
@@ -70,7 +61,6 @@ export function logTestResults(testResults) {
   const descriptionWidth = maxDescriptionLength + 4;
   const gasWidth = 15; // Increased width for better formatting
 
-  // Create header and separator lines
   const header = `| ${"Description".padEnd(
     descriptionWidth
   )} | ${"Gas Used".padEnd(gasWidth)} |`;
@@ -78,7 +68,6 @@ export function logTestResults(testResults) {
     gasWidth + 2
   )}|`;
 
-  // Create rows with separators
   const rows = data
     .map((row) => {
       return `| ${row.Description.padEnd(
@@ -87,13 +76,29 @@ export function logTestResults(testResults) {
     })
     .join(`\n${separator}\n`);
 
-  // Print the results
   console.log("");
   console.log(separator);
   console.log(header);
   console.log(separator);
   console.log(rows);
   console.log(separator);
+}
+
+/**
+ * Logs the gas usage breakdown from test results in a table format.
+ *
+ * This function determines whether the test results are minimal or full based on
+ * the number of receipts outcomes. It then generates a gas usage object using the
+ * appropriate flag, converts this object into a table-friendly format, and logs
+ * the data in a well-formatted table.
+ *
+ * @param {Object} testResults - The test results object containing gas usage metrics.
+ */
+export function logTestResults(testResults) {
+  const isMinimal = testResults.result.receipts_outcome.length === 2;
+  const gasObject = generateGasObject(testResults, isMinimal);
+  const data = convertGasBreakdownToRows(gasObject);
+  logMarkdownTable(data);
 }
 
 /**
@@ -114,10 +119,6 @@ export function generateGasObject(testResult, isMinimal = false) {
   // Initialize gas breakdown
   const gasBreakdownForReceipt = gasBreakdown(
     testResult.result.receipts_outcome[0].outcome
-  );
-
-  const formattedGasBreakdown = formatGasBreakdownResults(
-    gasBreakdownForReceipt
   );
 
   // Common values
@@ -164,25 +165,12 @@ export function generateGasObject(testResult, isMinimal = false) {
   return {
     gasUsedToConvertTransactionToReceipt,
     gasUsedToExecuteReceipt,
-    gasBreakdownForReceipt: formattedGasBreakdown,
+    gasBreakdownForReceipt,
     gasUsedToExecuteCrossContractCall,
     gasUsedToRefundUnusedGasForCrossContractCall,
     gasUsedToRefundUnusedGas,
     totalGasUsed,
   };
-}
-
-/**
- * Formats the gas breakdown results.
- *
- * @param {Map<string, number>} resultsMap - A map where keys represent gas usage categories and values represent the corresponding gas usage.
- * @returns {Object} An object with formatted gas usage values for each category.
- */
-function formatGasBreakdownResults(resultsMap) {
-  return Array.from(resultsMap).reduce((acc, [key, value]) => {
-    acc[key] = formatGas(value);
-    return acc;
-  }, {});
 }
 
 /**
@@ -299,11 +287,15 @@ export async function jsonToMarkdown(title, data, fileName) {
         ]
       );
 
+      const filteredRows = rows.filter(([_, rustValue, jsValue]) => {
+        return rustValue && jsValue;
+      });
+
       return {
         h3: name,
         table: {
           headers,
-          rows,
+          rows: filteredRows,
         },
       };
     }
@@ -314,11 +306,15 @@ export async function jsonToMarkdown(title, data, fileName) {
     ...filterMarkdownSections(markdownSections),
   ]);
 
-  await fs.writeFile(`${fileName}.md`, markdown);
+  try {
+    await fs.writeFile(`${fileName}.md`, markdown);
+  } catch (error) {
+    console.error(`Failed to write the file: ${error.message}`);
+    throw error;
+  }
 
   return markdown;
 }
-
 /**
  * Sorts JSON data according to a predefined order and converts it into an object.
  *
