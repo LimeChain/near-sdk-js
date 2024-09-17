@@ -8,6 +8,7 @@ const relativeDir = args[0];
 
 const isBefore = args.includes("--before");
 const isAfter = args.includes("--after");
+const isHelp = args.includes("--help");
 
 if (!relativeDir) {
   console.log("Please provide a directory path as an argument.");
@@ -17,6 +18,16 @@ if (!relativeDir) {
 if (!isBefore && !isAfter) {
   console.log("Please specify either --before or --after flag.");
   process.exit(1);
+}
+
+if (isBefore && isAfter) {
+  console.log("Please specify either --before or --after, not both.");
+  process.exit(1);
+}
+
+if (isHelp) {
+  console.log(`Usage: node script.js <${relativeDir}> [--before|--after]`);
+  process.exit(0);
 }
 
 // Get the working directory from the environment variable
@@ -84,7 +95,11 @@ const calculateFileSizes = async () => {
       Object.keys(updatedFileSizes.afterOptimization).length
     ) {
       // Generate Markdown file
-      generateMarkdown(scriptDir, fileSizes);
+      try {
+        await generateMarkdown(scriptDir, fileSizes);
+      } catch (err) {
+        console.error(`Error generating Markdown: ${err.message}`);
+      }
     }
   } catch (err) {
     console.error(`Error: ${err.message}`);
@@ -130,6 +145,10 @@ const generateMarkdown = async (outputDir, data) => {
 const calculatePercentageDifference = (beforeSize, afterSize) => {
   const beforeSizeNum = parseFloat(beforeSize);
   const afterSizeNum = parseFloat(afterSize);
+
+  if (isNaN(beforeSizeNum) || isNaN(afterSizeNum)) {
+    return "N/A";
+  }
 
   return (
     (((beforeSizeNum - afterSizeNum) / beforeSizeNum) * 100).toFixed(2) + "%"

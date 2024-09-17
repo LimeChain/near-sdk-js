@@ -14,13 +14,22 @@ const resultsFilePath = path.resolve("temp-all-test-results.json");
  */
 function readExistingResults() {
   if (fs.existsSync(resultsFilePath)) {
-    const fileContent = fs.readFileSync(resultsFilePath, "utf-8");
-    return JSON.parse(fileContent);
+    try {
+      const fileContent = fs.readFileSync(resultsFilePath, "utf-8");
+      return JSON.parse(fileContent);
+    } catch (error) {
+      console.error("Failed to read or parse results file:", error);
+      return {};
+    }
   }
   return {};
 }
 
-/** Function to add test results to the report if the GENERATE_REPORT environment variable is set to "true" */
+/**
+ * Function to add test results to the report if the GENERATE_REPORT environment variable is set to "true"
+ * @param {string} testName - The name of the test.
+ * @param {Object} result - The test result object.
+ */
 export function addTestResults(testName, result) {
   // Check if we need to generate a report
   if (process.env.GENERATE_REPORT === "true") {
@@ -38,7 +47,14 @@ export function addTestResults(testName, result) {
       ...tempResults,
     };
 
-    // Write the combined results to the file
-    fs.writeFileSync(resultsFilePath, JSON.stringify(combinedResults, null, 2));
+    try {
+      // Write the combined results to the file
+      fs.writeFileSync(
+        resultsFilePath,
+        JSON.stringify(combinedResults, null, 2)
+      );
+    } catch (error) {
+      console.error("Failed to write results to file:", error);
+    }
   }
 }
