@@ -18,23 +18,27 @@
     "build:unordered-set": "near-sdk-js build src/unordered-set.js build/unordered-set.wasm",
     "build:vector": "near-sdk-js build src/vector.js build/vector.wasm",
     "test": "ava",
+    "test:with-report": "GENERATE_REPORT=true ava && node src/generate-report.js",
     "test:lowlevel-minimal": "ava __tests__/test-lowlevel-minimal.ava.js",
     "test:highlevel-minimal": "ava __tests__/test-highlevel-minimal.ava.js",
     "test:lowlevel-api": "ava __tests__/test-lowlevel-api.ava.js",
     "test:highlevel-collection": "ava __tests__/test-highlevel-collection.ava.js",
     "test:expensive-calc": "ava __tests__/test-expensive-calc.ava.js",
     "test:deploy-contract": "ava __tests__/test-deploy-contract.ava.js",
-    "test:collections": "ava __tests__/test-collections-performance.ava.js"
+    "test:collections": "ava __tests__/test-collections-performance.ava.js",
+    "calculate-file-sizes": "WORKING_DIR=$(pwd) pnpm --filter shared-scripts run calculate-file-sizes"
   },
   "author": "Near Inc <hello@nearprotocol.com>",
   "license": "Apache-2.0",
   "devDependencies": {
     "ava": "4.3.3",
     "near-workspaces": "4.0.0",
-    "npm-run-all": "4.1.5"
+    "npm-run-all": "4.1.5",
+    "json2md": "2.0.1"
   },
   "dependencies": {
-    "typescript": "4.7.4",
-    "near-sdk-js": "workspace:*"
+    "near-sdk-js": "workspace:*",
+    "typescript": "4.7.4"
   }
 }
+
